@@ -1,0 +1,67 @@
+<resources>
+    <string name="app_name">Travel</string>
+
+    <string name="permission_rationale_location">Access to the location service is required to demonstrate the \'my location\' feature, which shows your current location on the map.</string>
+    <string name="location_permission_denied">This sample requires location permission to enable the \'my location\' layer. Please try again and grant access to use the location.\nIf the permission has been permanently denied, it can be enabled from the System Settings &gt; Apps &gt;\'.</string>
+    <string name="permission_required_toast">Location permission is required.</string>
+
+    <string name="select_zoom_levels">Select zoom levels</string>
+    <string name="from">from</string>
+    <string name="to">to</string>
+
+    <string name="absolute">Absolute</string>
+    <string name="relative">Relative</string>
+
+
+    <!--main base_activity tab start-->
+    <string name="base_activity_some_error">Some Error Occurred!</string>
+    <!--main base_activity tab end-->
+
+
+    <!--main activity tab start-->
+    <string name="main_activity_exit">Exit</string>
+    <string name="main_activity_exit_confirmation">Are you sure?</string>
+    <!--main activity tab end-->
+
+    <!--tools tab start-->
+    <string name="tools_tab_ruler">Ruler</string>
+    <string name="tools_tab_distance">Distance</string>
+    <string name="tools_tab_add">Add</string>
+    <string name="tools_tab_clean">Clean</string>
+    <string name="tools_tab_map_downloader">Map Downloader</string>
+    <string name="tools_tab_confirm_cancel_download">Cancel download</string>
+    <string name="tools_tab_download">Download</string>
+    <string name="tools_tab_cancel">Cancel</string>
+    <string name="tools_tab_error">Error</string>
+    <string name="tools_tab_finish">Finish</string>
+    <!--tools tab end-->
+
+    <!--targets tab start-->
+    <string name="targets_tab_add_target">Add target</string>
+    <string name="targets_tab_edit_target">Edit target</string>
+    <string name="targets_tab_select_on_the_map">Select on the map</string>
+    <string name="targets_tab_target_id">Id</string>
+    <string name="targets_tab_name">Name</string>
+    <string name="targets_tab_latitude">Latitude °</string>
+    <string name="targets_tab_longitude">Longitude °</string>
+
+    <string name="targets_tab_azimuth">Azimuth °</string>
+    <string name="targets_tab_distance">Distance, m</string>
+    <string name="targets_tab_shift_target">Shift target</string>
+
+    <string name="targets_tab_remove_target">Remove target</string>
+
+    <!--targets tab end-->
+
+    <!--photos_viewer tab start-->
+    <!--photos_viewer tab end-->
+
+    <!--start-->
+
+    <string name="dash" translatable="false">-</string>
+    <string name="int_zero" translatable="false">0</string>
+    <string name="float_zero" translatable="false">0.0</string>
+    <string name="zero_out_of_zero" translatable="false">0/0</string>
+    <string name="float_one" translatable="false">1.0</string>
+
+</resources>

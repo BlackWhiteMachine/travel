@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/border_with_solid"
+    android:padding="8dp" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:padding="4dp"
+            android:text="@string/targets_tab_target_id"
+            android:textColor="@color/colorBlack" />
+
+        <TextView
+            android:id="@+id/idTextView"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:padding="4dp"
+            android:text="@string/int_zero"
+            android:textColor="@color/colorBlack" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:textSize="16sp"
+            android:text="@string/targets_tab_name"
+            android:textColor="@color/colorBlack" />
+
+        <TextView
+            android:id="@+id/targetNameTextView"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:textSize="16sp"
+            android:text="@string/dash"
+            android:textColor="@color/colorBlack" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:padding="4dp"
+            android:text="@string/targets_tab_latitude"
+            android:textColor="@color/colorBlack" />
+
+        <TextView
+            android:id="@+id/latitudeTextView"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:padding="4dp"
+            android:text="@string/float_zero"
+            android:textColor="@color/colorBlack" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:padding="4dp"
+            android:text="@string/targets_tab_longitude"
+            android:textColor="@color/colorBlack" />
+
+        <TextView
+            android:id="@+id/longitudeTextView"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:padding="4dp"
+            android:text="@string/float_zero"
+        android:textColor="@color/colorBlack" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/correctionTargetButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/targets_tab_edit_target"
+        android:drawableStart="@drawable/ic_brush" />
+
+    <Button
+        android:id="@+id/deleteTargetButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/targets_tab_remove_target"
+        android:drawableStart="@drawable/ic_delete" />
+
+</LinearLayout>
