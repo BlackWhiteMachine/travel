@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MapModel @Inject constructor() {
+class MapModel @Inject constructor() : MarkerEventsListener {
 
     private val mMapOverlaysSet: MutableSet<Long> = TreeSet()
 
@@ -36,6 +36,8 @@ class MapModel @Inject constructor() {
                 visibleAreaSubject.onNext(it)
             }
         }
+
+    private var markerDragEvents: PublishSubject<MapPoint>? = null
 
     private var mapOverlayId: Long = 0
 
@@ -70,10 +72,6 @@ class MapModel @Inject constructor() {
         }
     }
 
-    fun addMapMarkerDrag(id: Long, source: Observable<MapPoint>) {
-        markerDragListenerSubject.onNext(Pair(id, source))
-    }
-
     fun setMarkerIcon(markerId: Long, resId: Int) {}
 
     fun removeMarker(id: Long) {
@@ -84,6 +82,18 @@ class MapModel @Inject constructor() {
 
             mapActionsSubject.onNext(createInvalidateAction())
         }
+    }
+
+    fun removeMarkers(idList: List<Long>) {
+        for(id in idList) {
+            if (mMapOverlaysSet.contains(id)) {
+                mMapOverlaysSet.remove(id)
+
+                mapActionsSubject.onNext(createRemoveMarkerAction(id))
+            }
+        }
+
+        mapActionsSubject.onNext(createInvalidateAction())
     }
 
     fun setMarkerVisibility(id: Long, visibility: Boolean) {}
@@ -128,13 +138,35 @@ class MapModel @Inject constructor() {
         }
     }
 
-    fun invalidateMapView() {
-        mapActionsSubject.onNext(createInvalidateAction())
-    }
-
     fun showInfoWindow(id: Long) {
         mapActionsSubject.onNext(createShowInfoWindowMarkerAction(id))
     }
 
     fun hideAllInfoWindows() {}
+
+    override fun onMarkerClick(id: Long) { }
+
+    override fun onMarkerDragStart(id: Long, mapPoint: MapPoint) {
+        markerDragEvents = PublishSubject.create()
+
+        addMapMarkerDrag(id, markerDragEvents!!)
+
+        markerDragEvents!!.onNext(mapPoint)
+    }
+
+    override fun onMarkerDrag(mapPoint: MapPoint) {
+        markerDragEvents?.onNext(mapPoint)
+    }
+
+    override fun onMarkerDragEnd(mapPoint: MapPoint) {
+        markerDragEvents?.apply {
+            onNext(mapPoint)
+            onComplete()
+        }
+    }
+
+    private fun addMapMarkerDrag(id: Long, source: Observable<MapPoint>) {
+        markerDragListenerSubject.onNext(Pair(id, source))
+    }
+
 }

@@ -26,7 +26,6 @@ class ToolsInteractor @Inject constructor(private val elevationsRepo: Elevations
 
         var result = elevationsRepo.clear().andThen(Observable.just(-(squareXFinal * squareYFinal)))
 
-
         for (iterY in 0 until elevationBox.rows step ElevationBox.Size) {
             val latitudeStop = elevationBox.latitudeNorth - elevationBox.latitudeStep * iterY
             val latitudeStart = latitudeStop - elevationBox.latitudeStep * (ElevationBox.Size - 1)
@@ -46,7 +45,6 @@ class ToolsInteractor @Inject constructor(private val elevationsRepo: Elevations
 
         return result.doOnComplete { elevationsRepo.elevationBox = elevationBox}
     }
-
 
     override fun getElevations(startGeoPoint: MapPoint, finishGeoPoint: MapPoint): Single<List<Int>> {
         val startCoordinate = getCoordinate(startGeoPoint.latitude, startGeoPoint.longitude)

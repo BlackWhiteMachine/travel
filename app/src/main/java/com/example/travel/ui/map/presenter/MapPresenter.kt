@@ -6,11 +6,9 @@ import com.example.travel.ui.map.interactor.MapMvpInteractor
 import com.example.travel.ui.map.view.MapMvpView
 import com.example.travel.util.rx.SchedulerProvider
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.subjects.PublishSubject
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Marker
-import java.util.*
 import javax.inject.Inject
 
 class MapPresenter<V : MapMvpView, I : MapMvpInteractor> @Inject
@@ -23,8 +21,6 @@ class MapPresenter<V : MapMvpView, I : MapMvpInteractor> @Inject
     companion object {
         private val TAG = MapPresenter::class.java.simpleName
     }
-
-    private var mMapDragEvents: PublishSubject<MapPoint>? = null
 
     private var mapPoint: MapPoint? = null
 
@@ -59,14 +55,14 @@ class MapPresenter<V : MapMvpView, I : MapMvpInteractor> @Inject
         mapModel.visibleArea = visibleArea
     }
 
-    override fun onMarkerClick(markerId: Long) {}
+    override fun onMarkerClick(id: Long) { mapModel.onMarkerClick(id) }
 
     override fun onMarkerDrag(marker: Marker) {
         mapPoint?.let {
             it.latitude = marker.position.latitude
             it.longitude = marker.position.longitude
 
-            mMapDragEvents?.onNext(it)
+            mapModel.onMarkerDrag(it)
         }
     }
 
@@ -75,27 +71,16 @@ class MapPresenter<V : MapMvpView, I : MapMvpInteractor> @Inject
             it.latitude = marker.position.latitude
             it.longitude = marker.position.longitude
 
-            mMapDragEvents?.apply {
-                onNext(it)
-                onComplete()
-            }
+            mapModel.onMarkerDragEnd(it)
         }
 
-        mMapDragEvents = null
         mapPoint = null
     }
 
     override fun onMarkerDragStart(marker: Marker) {
-        val markerId = java.lang.Long.parseLong(marker.id)
+        mapPoint = MapPoint(marker.position.latitude, marker.position.longitude)
 
-        mMapDragEvents = PublishSubject.create()
-
-        mapModel.addMapMarkerDrag(markerId, mMapDragEvents!!)
-
-        mapPoint = MapPoint(marker.position.latitude,
-                marker.position.longitude)
-
-        mMapDragEvents!!.onNext(mapPoint!!)
+        mapModel.onMarkerDragStart(java.lang.Long.parseLong(marker.id), mapPoint!!)
     }
 
     private fun handleAction(action: MapAction) {
@@ -145,13 +130,8 @@ class MapPresenter<V : MapMvpView, I : MapMvpInteractor> @Inject
             ActionType.UPDATE_LINE_POINTS -> {
                 val updateLinePoints = action as UpdateLinePoints
 
-                val geoPoints = LinkedList<GeoPoint>()
-
-                for (mapPoint in updateLinePoints.mapPointsList) {
-                    geoPoints.add(GeoPoint(mapPoint.latitude, mapPoint.longitude))
-                }
-
-                getView()?.updateLinePoints(updateLinePoints.id, geoPoints)
+                getView()?.updateLinePoints(updateLinePoints.id,
+                        updateLinePoints.mapPointsList.map{ GeoPoint(it.latitude, it.longitude) })
             }
 
             ActionType.REMOVE_LINE -> {

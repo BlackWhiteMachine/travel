@@ -36,7 +36,7 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
     private var elevationLine: Long = -1
     private val markers: MutableList<PointInfo> = ArrayList()
     private val ways: MutableList<WayInfo> = ArrayList()
-    private var mLastAdditionalState = INIT
+    private var lastAdditionalState = INIT
     private var additionalState = INIT
 
     data class PointInfo(var position: MapPoint,
@@ -45,29 +45,33 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
                          var destination: WayInfo? = null)
 
     class WayInfo(var startGeoPoint: MapPoint, var finishGeoPoint: MapPoint) {
-        var distance: Double = 0.0
+        var distance: Float = 0F
         var elevations: List<Int>? = null
+
+        init {
+            calculateDistance()
+        }
 
         fun updateStartGeoPoint(start: MapPoint) {
             startGeoPoint = start
 
-            update()
+            calculateDistance()
         }
 
         fun updateFinishGeoPoint(finish: MapPoint) {
             finishGeoPoint = finish
 
-            update()
+            calculateDistance()
         }
 
-        fun update() {
+        private fun calculateDistance() {
             elevations = null
 
             val dis = FloatArray(1)
             Location.distanceBetween(startGeoPoint.latitude, startGeoPoint.longitude,
                     finishGeoPoint.latitude, finishGeoPoint.longitude, dis)
 
-            distance = dis[0].toDouble()
+            distance = dis[0]
         }
     }
 
@@ -88,12 +92,55 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
         interactor?.let {
             compositeDisposable.add(it.seedElevationBox()
                 .observeOn(schedulerProvider.ui())
-                .subscribe { onNewElevationBox(it) }
+                .subscribe { elevationBox: ElevationBox ->onNewElevationBox(elevationBox) }
             )
 
             compositeDisposable.add(it.seedDownloadQueue()
+                    .observeOn(schedulerProvider.io())
+                    .flatMap { elevationBox: ElevationBox -> it.seedDownloadProgress(elevationBox) }
+                    .observeOn(schedulerProvider.ui())
+                    .subscribe(object : Consumer<Int> {
+                        var squareNumberFinal = 0
+
+                        @Throws(Exception::class)
+                        override fun accept(value: Int) {
+                            if (value < 0) {
+                                squareNumberFinal = (-value)
+                                getView()?.showProgressDownload()
+                            } else {
+                                getView()?.updateProgressDownload(String.format(Locale.ENGLISH, "Elevations: %d/%d", value, squareNumberFinal), value, squareNumberFinal)
+                            }
+
+                            if (value == squareNumberFinal) {
+                                   getView()?.changeProgressDownload(R.string.tools_tab_finish)
+                            }
+                        }
+                    }, Consumer { throwable ->
+
+                        Log.e(TAG, "onError: $throwable")
+
+                        throwable.printStackTrace()
+
+                        getView()?.changeProgressDownload(R.string.tools_tab_error)
+                    })
+            )
+        }
+
+        // Thread test
+        interactor?.let {
+            compositeDisposable.add(it.seedDownloadQueue()
+                    .observeOn(schedulerProvider.io())
+                    .flatMap { elevationBox: ElevationBox ->
+                        Log.i(TAG, "test: elevationBox: $elevationBox")
+                        Log.i(TAG, "test: Thread.currentThread().name: ${Thread.currentThread().name}")
+
+                        Observable.just(elevationBox)
+                    }
+                    .observeOn(schedulerProvider.ui())
                     .subscribe { elevationBox: ElevationBox ->
-                        subscribeProgress(it.seedDownloadProgress(elevationBox))
+                        Log.i(TAG, "test: elevationBox: $elevationBox")
+                        Log.i(TAG, "test: Thread.currentThread().name: ${Thread.currentThread().name}")
+                        //    Thread.currentThread().name
                     }
             )
         }
@@ -122,35 +169,6 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
         mapModel.updatePolylineMapPoints(elevationLine, mapPoints)
     }
 
-    private fun subscribeProgress(source: Observable<Int>) {
-        compositeDisposable.add(source
-                .subscribeOn(schedulerProvider.io())
-                .observeOn(schedulerProvider.ui())
-                .subscribe(object : Consumer<Int> {
-                    var squareNumberFinal = 0
-
-                    @Throws(Exception::class)
-                    override fun accept(int: Int) {
-                        var value = int
-                        if (value < 0) {
-                            squareNumberFinal = (-value)
-                        } else {
-                            value++
-                            getView()?.updateProgressDownload(String.format(Locale.ENGLISH, "Elevations: %d/%d", value, squareNumberFinal), value, squareNumberFinal)
-                        }
-                    }
-                }, Consumer { throwable ->
-
-                    Log.e(TAG, "onError: $throwable")
-
-                    throwable.printStackTrace()
-
-                    getView()?.changeProgressDownload(R.string.tools_tab_error)
-                }, Action { getView()?.changeProgressDownload(R.string.tools_tab_finish) }))
-
-        getView()?.showProgressDownload()
-    }
-
     private fun subscribeMarkerDrag(id: Long, source: Observable<MapPoint>) {
         val pointInfo: PointInfo? = markers.find { it.markerId == id }
 
@@ -162,7 +180,7 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
                                 it.source?.updateFinishGeoPoint(it.position)
                                 it.destination?.updateStartGeoPoint(it.position)
 
-                                measurementDistanceChanged()
+                                calculateTotalDistance()
 
                                 updateWay()
                             }
@@ -175,19 +193,20 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
 
                                     updateElevations(it)
                                 }
+
                                 pointInfoIt.destination?.let {
                                     it.updateStartGeoPoint(pointInfoIt.position)
 
                                     updateElevations(it)
                                 }
 
-                                var distance = 0f
+                                var distance = 0F
 
                                 for (pointInfoLocal in markers) {
                                     mapModel.updateMarkerTitle(pointInfoLocal.markerId, String.format(Locale.ENGLISH, "%.1f, m\n%.07f °\n%.07f °", distance, pointInfoLocal.position.latitude, pointInfoLocal.position.longitude))
 
                                     pointInfoLocal.destination?.let {
-                                        distance += it.distance.toFloat()
+                                        distance += it.distance
                                     }
                                 }
 
@@ -213,7 +232,7 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
 
     override fun onClearButtonClick() {
         getView()?.clearProfileElevation()
-
+        getView()?.updateDistance(String.format(Locale.ENGLISH, "%.1f, m", 0F))
         clear()
     }
 
@@ -230,13 +249,13 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
     }
 
     override fun resume() {
-        additionalState = mLastAdditionalState
+        additionalState = lastAdditionalState
 
         setVisibility(true)
     }
 
     override fun pause() {
-        mLastAdditionalState = additionalState
+        lastAdditionalState = additionalState
 
         additionalState = INIT
 
@@ -244,15 +263,7 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
     }
 
     override fun onDetach() {
-        for (pointInfo in markers) {
-            mapModel.removeMarker(pointInfo.markerId)
-        }
-
-        if (profileLineId != -1L) {
-            mapModel.removePolyline(profileLineId)
-
-            profileLineId = -1
-        }
+        clear()
 
         super.onDetach()
     }
@@ -264,8 +275,6 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
 
         if (profileLineId != -1L) {
             mapModel.setPolylineVisibility(profileLineId, visibility)
-
-            mapModel.invalidateMapView()
         }
     }
 
@@ -279,25 +288,19 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
 
             pointInfo.markerId = mapModel.addMarker(mapPoint)
 
-            mapModel.setMarkerDraggable(pointInfo.markerId, true)
-
-            var distance = 0f
+            var distance = 0F
 
             if (markers.isNotEmpty()) {
-                val startPointInfo = markers.last()
-                val finishGPointInfo = pointInfo
+                val oldLastPointInfo = markers.last()
 
-                val wayInfo = WayInfo(startPointInfo.position,
-                        mapPoint)
+                val wayInfo = WayInfo(oldLastPointInfo.position, mapPoint)
 
-                startPointInfo.destination = wayInfo
-                finishGPointInfo.source = wayInfo
-
-                wayInfo.update()
+                oldLastPointInfo.destination = wayInfo
+                pointInfo.source = wayInfo
 
                 ways.add(wayInfo)
 
-                distance = measurementDistanceChanged()
+                distance = calculateTotalDistance()
 
                 updateElevations(wayInfo)
             }
@@ -305,15 +308,14 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
             markers.add(pointInfo)
 
             mapModel.updateMarkerTitle(pointInfo.markerId, String.format(Locale.ENGLISH, "%.1f, m\n%.07f °\n%.07f °", distance, mapPoint.latitude, mapPoint.longitude))
+            mapModel.setMarkerDraggable(pointInfo.markerId, true)
 
             updateWay()
         }
     }
 
     private fun clear() {
-        for (pointInfo in markers) {
-            mapModel.removeMarker(pointInfo.markerId)
-        }
+        mapModel.removeMarkers(markers.map{ it.markerId })
 
         if (profileLineId != -1L) {
             mapModel.removePolyline(profileLineId)
@@ -323,18 +325,10 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
 
         markers.clear()
         ways.clear()
-
-        mapModel.invalidateMapView()
-
-        measurementDistanceChanged()
     }
 
-    private fun measurementDistanceChanged(): Float {
-        var distance = 0f
-
-        for (way in ways) {
-            distance += way.distance.toFloat()
-        }
+    private fun calculateTotalDistance(): Float {
+        val distance = ways.asSequence().map{ it.distance }.sum()
 
         getView()?.updateDistance(String.format(Locale.ENGLISH, "%.1f, m", distance))
 
@@ -342,20 +336,12 @@ class ToolsPresenter<V : ToolsMvpView, I: ToolsMvpInteractor> @Inject
     }
 
     private fun updateWay() {
-        val mapPoints = ArrayList<MapPoint>()
-
-        for (pointInfo in markers) {
-            mapPoints.add(pointInfo.position)
-        }
-
         if (profileLineId != -1L) {
-            mapModel.updatePolylineMapPoints(profileLineId, mapPoints)
-            mapModel.invalidateMapView()
+            mapModel.updatePolylineMapPoints(profileLineId, markers.map { it.position })
         }
     }
 
     private fun updateElevations(wayInfo: WayInfo) {
-
         interactor?.let {
             compositeDisposable.add(
                     it.getElevations(wayInfo.startGeoPoint, wayInfo.finishGeoPoint)

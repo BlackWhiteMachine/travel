@@ -102,7 +102,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:padding="8dp"
-            android:ems="5"
+            android:ems="8"
             android:text="@string/zero_out_of_zero" />
 
         <ProgressBar
