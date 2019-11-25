@@ -72,7 +72,7 @@ class MapModel @Inject constructor() : MarkerEventsListener {
         }
     }
 
-    fun setMarkerIcon(markerId: Long, resId: Int) {}
+    fun setMarkerIcon(id: Long, resId: Int) {}
 
     fun removeMarker(id: Long) {
         if (mMapOverlaysSet.contains(id)) {

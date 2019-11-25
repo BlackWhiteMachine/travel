@@ -127,10 +127,10 @@ class ToolsFragment : BaseFragment(), ToolsMvpView {
         }
 
         if (ways.isNotEmpty()) {
-            val way = ways[0]
+            val way = ways.first()
 
             if (way.elevations != null && way.elevations!!.isNotEmpty()) {
-                val elevation = way.elevations!![way.elevations!!.size - 1]
+                val elevation = way.elevations!!.last()
 
                 drawSeparator(arrayOf(
                         DataPoint(0.0, (elevation - 5).toDouble()),
